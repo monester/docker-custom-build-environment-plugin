@@ -45,10 +45,11 @@ public class Docker implements Closeable {
     private final DockerRegistryEndpoint registryEndpoint;
     private final boolean verbose;
     private final boolean privileged;
+    private final String alpineImage;
     private final AbstractBuild build;
     private EnvVars envVars;
 
-    public Docker(DockerServerEndpoint dockerHost, String dockerInstallation, String credentialsId, AbstractBuild build, Launcher launcher, TaskListener listener, boolean verbose, boolean privileged) throws IOException, InterruptedException {
+    public Docker(DockerServerEndpoint dockerHost, String dockerInstallation, String credentialsId, AbstractBuild build, Launcher launcher, TaskListener listener, boolean verbose, boolean privileged, String alpineImage) throws IOException, InterruptedException {
         this.dockerHost = dockerHost;
         this.dockerExecutable = DockerTool.getExecutable(dockerInstallation, Computer.currentComputer().getNode(), listener, build.getEnvironment(listener));
         this.registryEndpoint = new DockerRegistryEndpoint(null, credentialsId);
@@ -57,6 +58,7 @@ public class Docker implements Closeable {
         this.build = build;
         this.verbose = verbose | debug;
         this.privileged = privileged;
+        this.alpineImage = alpineImage != null ? alpineImage : "alpine:3.2";
     }
 
 
@@ -245,7 +247,7 @@ public class Docker implements Closeable {
                 .add("run", "--rm")
                 .add("--entrypoint")
                 .add("/bin/true")
-                .add("alpine:3.2");
+                .add(this.alpineImage);
 
         int status = launcher.launch()
                 .envs(getEnvVars())
@@ -276,7 +278,7 @@ public class Docker implements Closeable {
                 .add("run", "--tty", "--rm")
                 .add("--entrypoint")
                 .add("/sbin/ip")
-                .add("alpine:3.2")
+                .add(this.alpineImage)
                 .add("route");
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
